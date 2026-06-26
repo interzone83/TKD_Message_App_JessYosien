@@ -23,7 +23,7 @@
   <div class="image-viewer" id="imageViewer"><div class="viewer-topbar"><button class="viewer-close" type="button" onclick="closeImageViewer()">×</button></div><img class="viewer-image" id="viewerImage" src="" alt=""></div>
   <script src="config.js"></script><script src="shared.js"></script>
   <script>
-    const ME=getQueryParam("me","Jess"),THEM=getQueryParam("them","Leon"),TARGET_MESSAGE_ID=getQueryParam("messageId","");document.title=ME+" Messages";document.getElementById("chatHeader").textContent=THEM;
+    const ME=getQueryParam("me","Jess"),THEM=getQueryParam("them","Yo"),TARGET_MESSAGE_ID=getQueryParam("messageId","");document.title=ME+" Messages";document.getElementById("chatHeader").textContent=THEM;
     let serverMessages=[],pendingMessages=[],lastRendered="",didScrollToTarget=false;
     async function loadStyles(){try{applyChatStyles(await apiGet("getChatStyles",{me:ME,them:THEM}))}catch(e){console.log("Load styles error:",e);document.querySelector(".app").classList.add("ready")}}
     function applyChatStyles(s){if(!s){document.querySelector(".app").classList.add("ready");return}setCssVar("--chat-header",s["Chat Header Colour"]);setCssVar("--chat-footer",s["Chat Footer Colour"]);setCssVar("--chat-bg",s["Chat Background Colour"]);setCssVar("--sent-bubble",s["Sent Bubble Colour"]);setCssVar("--received-bubble",s["Received Bubble Colour"]);setCssVar("--send-button",s["Send Button Colour"]);if(s["Profile Image URL"])document.getElementById("profileCircle").style.backgroundImage=`url("${s["Profile Image URL"]}")`;document.querySelector(".app").classList.add("ready")}
