@@ -1,6 +1,195 @@
 <!DOCTYPE html>
-<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"><title>Home Screen</title><style>
-html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;font-family:Arial,Roboto,Helvetica,sans-serif;background:#000;-webkit-text-size-adjust:100%}.phone-screen{position:fixed;inset:0;width:100%;height:100vh;background:var(--wallpaper,linear-gradient(160deg,#111827,#1e293b 55%,#020617));background-size:cover;background-position:center;color:var(--home-text,#fff);opacity:0;transition:opacity .55s ease;overflow:hidden;z-index:1}.phone-screen.awake{opacity:1}.phone-status-bar{position:absolute;top:0;left:0;right:0;padding:calc(8px + env(safe-area-inset-top)) 18px 7px;display:flex;justify-content:space-between;align-items:center;font-size:12px;font-weight:700;letter-spacing:.1px;color:rgba(244,247,251,.92);z-index:5}.status-right{display:flex;align-items:center;gap:7px}.signal-bars{display:flex;align-items:end;gap:2px;height:11px}.signal-bars span{width:3px;background:currentColor;border-radius:2px;opacity:1}.signal-bars span:nth-child(1){height:3px}.signal-bars span:nth-child(2){height:6px}.signal-bars span:nth-child(3){height:8px}.signal-bars span:nth-child(4){height:11px}.battery{width:24px;height:11px;border:1.6px solid currentColor;border-radius:3px;position:relative;overflow:hidden}.battery::after{content:"";position:absolute;right:-4px;top:3px;width:3px;height:5px;background:currentColor;border-radius:0 2px 2px 0}.battery-fill{height:100%;width:43%;background:currentColor}.home-info{position:absolute;top:13%;left:20px;right:20px;z-index:5;padding:18px 18px 16px;border-radius:24px;background:rgba(10,16,24,.24);box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}.small-date{font-size:15px;font-weight:700;color:rgba(255,255,255,.72);margin-bottom:6px}.big-time{font-size:48px;font-weight:var(--time-weight,700);line-height:1;color:var(--home-time,#fff);letter-spacing:-.04em}.owner-label{margin-top:8px;font-size:13px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.52)}.notification{position:absolute;left:16px;right:16px;top:54%;background:var(--notification-bg,rgba(38,49,61,.92));color:var(--notification-text,#f4f7fb);border-radius:20px;padding:14px 15px;box-shadow:0 10px 32px rgba(0,0,0,.32);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);transform:translateY(18px);opacity:0;transition:opacity .45s ease .3s,transform .45s ease .3s;cursor:pointer;border:none;text-align:left;font-family:inherit;width:auto;display:block;z-index:6;border:1px solid rgba(255,255,255,.08)}.phone-screen.awake .notification.show{opacity:1;transform:translateY(0)}.notification-top{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:rgba(244,247,251,.62);margin-bottom:7px}.app-name{font-weight:800;text-transform:uppercase;letter-spacing:.14em}.sender{font-size:16px;font-weight:800;margin-bottom:3px}.message{font-size:15px;line-height:1.28}.off-screen{position:fixed;inset:0;background:#000;opacity:1;visibility:visible;transition:opacity .55s ease,visibility .55s ease;pointer-events:auto;z-index:20}.off-screen.hidden{opacity:0;visibility:hidden;pointer-events:none}
-</style></head><body><div class="phone-screen" id="phoneScreen"><div class="phone-status-bar"><div id="statusTime">10:47</div><div class="status-right"><div class="signal-bars"><span></span><span></span><span></span><span></span></div><span id="signal">5G</span><span id="batteryPercent">43%</span><div class="battery"><div class="battery-fill" id="batteryFill"></div></div></div></div><div class="home-info"><div class="small-date" id="displayDate">Saturday, 16 May</div><div class="big-time" id="displayTime">10:47</div><div class="owner-label" id="ownerLabel">Leon</div></div><button class="notification" id="notificationButton" type="button"><div class="notification-top"><span class="app-name">Messages</span><span id="notificationTime">now</span></div><div class="sender" id="notificationFrom">Jess</div><div class="message" id="notificationText">New message</div></button></div><div class="off-screen" id="offScreen"></div><script src="config.js"></script><script src="shared.js"></script><script>
-const ME=getQueryParam("me","Jess"),THEM=getQueryParam("them","Leon");document.title=ME+" Home Screen";let latestSettings={},wasActive=false,audioContext=null,soundArmed=false;function armSound(){if(soundArmed)return;try{audioContext=new(window.AudioContext||window.webkitAudioContext)();soundArmed=true}catch(e){console.log("Audio not available:",e)}}function playPing(){if(!soundArmed||!audioContext)return;const o=audioContext.createOscillator(),g=audioContext.createGain();o.type="sine";o.frequency.setValueAtTime(880,audioContext.currentTime);o.frequency.exponentialRampToValueAtTime(1320,audioContext.currentTime+.12);g.gain.setValueAtTime(.001,audioContext.currentTime);g.gain.exponentialRampToValueAtTime(.18,audioContext.currentTime+.02);g.gain.exponentialRampToValueAtTime(.001,audioContext.currentTime+.35);o.connect(g);g.connect(audioContext.destination);o.start();o.stop(audioContext.currentTime+.35)}async function loadHomeScreen(){try{applyHomeSettings(await apiGet("getHomeScreenSettings",{owner:ME}))}catch(e){console.log("Home screen error:",e)}}function applyHomeSettings(s){latestSettings=s||{};applyHomeStyles(latestSettings["Styles"]||{});const active=latestSettings["Activate"]===true||String(latestSettings["Activate"]).toUpperCase()==="TRUE",phone=phoneScreen,off=offScreen,notification=notificationButton;if(!active){phone.classList.remove("awake");off.classList.remove("hidden");notification.classList.remove("show");wasActive=false;return}const display=latestSettings["Display Time"]||"10:47",owner=latestSettings["Phone Owner"]||ME||"Leon";displayTime.textContent=display;statusTime.textContent=display;ownerLabel.textContent=owner;notificationTime.textContent=latestSettings["Notification Time"]||"now";displayDate.textContent=formatDisplayDate(latestSettings["Display Date"]);signal.textContent=latestSettings["Signal"]||"5G";const b=parseInt(latestSettings["Battery %"]||"43",10),bat=Math.max(0,Math.min(100,isNaN(b)?43:b));batteryPercent.textContent=bat+"%";batteryFill.style.width=bat+"%";notificationFrom.textContent=latestSettings["Notification From"]||THEM||"Jess";notificationText.textContent=latestSettings["Notification Text"]||"New message";const showBubble=String(latestSettings["Display Notification Bubble"]||"TRUE").toUpperCase()==="TRUE";if(showBubble)notification.classList.add("show");else notification.classList.remove("show");if(!wasActive){setTimeout(()=>{if(showBubble)playPing();off.classList.add("hidden");phone.classList.add("awake")},150)}else{off.classList.add("hidden");phone.classList.add("awake")}wasActive=true}function applyHomeStyles(styles){if(!styles)return;setCssVar("--home-time",styles["Home Time Colour"]||"#ffffff");setCssVar("--home-text",styles["Home Text Colour"]||"#ffffff");setCssVar("--notification-bg",styles["Home Notification Colour"]||"rgba(38,49,61,0.92)");setCssVar("--notification-text",styles["Home Notification Text Colour"]||"#f4f7fb");setCssVar("--time-weight",styles["Home Font Style"]==="thin"?"500":"700");setCssVar("--wallpaper",getWallpaperCss(styles["Home Wallpaper"],styles["Home Wallpaper URL"]))}function openChat(){const me=latestSettings["Phone Owner"]||ME||"Leon",them=latestSettings["Notification From"]||THEM||"Jess",target=latestSettings["Target Message ID"]||"";let url="chat.html?me="+encodeURIComponent(me)+"&them="+encodeURIComponent(them);if(target)url+="&messageId="+encodeURIComponent(target);window.location.href=url}notificationButton.addEventListener("click",openChat);notificationButton.addEventListener("touchend",e=>{e.preventDefault();openChat()});document.body.addEventListener("touchstart",armSound,{once:true});document.body.addEventListener("click",armSound,{once:true});loadHomeScreen();setInterval(loadHomeScreen,1000);
-</script></body></html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Home Screen</title>
+<style>
+:root{
+  --wallpaper:linear-gradient(160deg,#111827,#1e293b 55%,#020617);
+  --home-text:#ffffff;
+  --home-time:#ffffff;
+  --notification-bg:rgba(38,49,61,0.92);
+  --notification-text:#f4f7fb;
+  --time-weight:650;
+  --status-scale:1;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{
+  margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#000;
+  font-family:Roboto,"Helvetica Neue",Arial,sans-serif;-webkit-text-size-adjust:100%;
+}
+.phone-screen{
+  position:fixed;inset:0;width:100%;height:100vh;
+  background:var(--wallpaper);background-size:cover;background-position:center;
+  color:var(--home-text);opacity:0;transition:opacity .55s ease;overflow:hidden;z-index:1;
+}
+.phone-screen.awake{opacity:1}
+
+/* Updated mini status bar: cleaner, tighter, closer to the message screen look */
+.phone-status-bar{
+  position:absolute;top:0;left:0;right:0;z-index:10;
+  padding:calc(7px + env(safe-area-inset-top)) 18px 6px;
+  display:flex;justify-content:space-between;align-items:center;
+  color:rgba(255,255,255,.96);text-shadow:0 1px 8px rgba(0,0,0,.34);
+  font-size:14px;font-weight:800;letter-spacing:-.01em;line-height:1;
+}
+.status-left{min-width:58px;display:flex;align-items:center;justify-content:flex-start}
+.status-right{display:flex;align-items:center;gap:6px;font-size:14px;font-weight:800}
+.signal-bars{display:flex;align-items:flex-end;gap:2px;height:13px;margin-right:1px}
+.signal-bars span{width:3px;background:currentColor;border-radius:2px;opacity:.98}
+.signal-bars span:nth-child(1){height:4px}.signal-bars span:nth-child(2){height:7px}.signal-bars span:nth-child(3){height:10px}.signal-bars span:nth-child(4){height:13px}
+.battery{
+  width:27px;height:14px;border:2px solid currentColor;border-radius:4px;position:relative;margin-left:1px;
+  filter:drop-shadow(0 1px 3px rgba(0,0,0,.22));
+}
+.battery::after{content:"";position:absolute;right:-5px;top:3px;width:3px;height:6px;background:currentColor;border-radius:0 2px 2px 0}
+.battery-fill{height:100%;width:43%;background:currentColor;border-radius:1.5px}
+
+/* Centered home clock/date, no glass bubble, no character name */
+.home-info{
+  position:absolute;top:11.8%;left:22px;right:22px;z-index:5;
+  text-align:center;padding:0;background:transparent;border:0;box-shadow:none;
+  backdrop-filter:none;-webkit-backdrop-filter:none;text-shadow:0 2px 16px rgba(0,0,0,.48);
+}
+.small-date{
+  font-size:18px;font-weight:600;color:rgba(255,255,255,.88);margin-bottom:4px;letter-spacing:-.01em;
+}
+.big-time{
+  font-size:64px;font-weight:var(--time-weight);line-height:.98;color:var(--home-time);letter-spacing:-.055em;
+}
+.owner-label{display:none}
+
+.notification{
+  position:absolute;left:16px;right:16px;top:54%;z-index:8;
+  background:var(--notification-bg);color:var(--notification-text);border-radius:20px;
+  padding:14px 15px;box-shadow:0 10px 32px rgba(0,0,0,.32);
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  transform:translateY(18px);opacity:0;transition:opacity .45s ease .3s,transform .45s ease .3s;
+  cursor:pointer;border:1px solid rgba(255,255,255,.08);text-align:left;font-family:inherit;width:auto;display:block;
+}
+.phone-screen.awake .notification.show{opacity:1;transform:translateY(0)}
+.notification-top{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:rgba(244,247,251,.66);margin-bottom:7px}
+.app-name{font-weight:850;text-transform:uppercase;letter-spacing:.14em}
+.sender{font-size:16px;font-weight:850;margin-bottom:3px;letter-spacing:-.01em}
+.message{font-size:15px;line-height:1.28;font-weight:520}
+.off-screen{position:fixed;inset:0;background:#000;opacity:1;visibility:visible;transition:opacity .55s ease,visibility .55s ease;pointer-events:auto;z-index:20}
+.off-screen.hidden{opacity:0;visibility:hidden;pointer-events:none}
+</style>
+</head>
+<body>
+<div class="phone-screen" id="phoneScreen">
+  <div class="phone-status-bar">
+    <div class="status-left" id="statusTime">10:47</div>
+    <div class="status-right">
+      <div class="signal-bars" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+      <span id="signal">5G</span>
+      <span id="batteryPercent">43%</span>
+      <div class="battery" aria-hidden="true"><div class="battery-fill" id="batteryFill"></div></div>
+    </div>
+  </div>
+
+  <div class="home-info">
+    <div class="small-date" id="displayDate">Saturday 16 May</div>
+    <div class="big-time" id="displayTime">10:47</div>
+    <div class="owner-label" id="ownerLabel"></div>
+  </div>
+
+  <button class="notification" id="notificationButton" type="button">
+    <div class="notification-top"><span class="app-name" id="notificationApp">Messages</span><span id="notificationTime">now</span></div>
+    <div class="sender" id="notificationFrom">Jess</div>
+    <div class="message" id="notificationText">New message</div>
+  </button>
+</div>
+<div class="off-screen" id="offScreen"></div>
+
+<script src="config.js"></script>
+<script src="shared.js"></script>
+<script>
+const ME=getQueryParam("me","Jess"),THEM=getQueryParam("them","Leon");
+document.title=ME+" Home Screen";
+let latestSettings={},wasActive=false,audioContext=null,soundArmed=false;
+
+function armSound(){
+  if(soundArmed)return;
+  try{audioContext=new(window.AudioContext||window.webkitAudioContext)();soundArmed=true}catch(e){console.log("Audio not available:",e)}
+}
+function playPing(){
+  if(!soundArmed||!audioContext)return;
+  const o=audioContext.createOscillator(),g=audioContext.createGain();
+  o.type="sine";o.frequency.setValueAtTime(880,audioContext.currentTime);o.frequency.exponentialRampToValueAtTime(1320,audioContext.currentTime+.12);
+  g.gain.setValueAtTime(.001,audioContext.currentTime);g.gain.exponentialRampToValueAtTime(.18,audioContext.currentTime+.02);g.gain.exponentialRampToValueAtTime(.001,audioContext.currentTime+.35);
+  o.connect(g);g.connect(audioContext.destination);o.start();o.stop(audioContext.currentTime+.35);
+}
+async function loadHomeScreen(){
+  try{applyHomeSettings(await apiGet("getHomeScreenSettings",{owner:ME}))}catch(e){console.log("Home screen error:",e)}
+}
+function boolValue(v,defaultValue){
+  if(v===undefined||v===null||v==="")return defaultValue;
+  return v===true||String(v).toUpperCase()==="TRUE"||String(v).toUpperCase()==="YES"||String(v)==="1";
+}
+function formatDateFallback(value){
+  if(typeof formatDisplayDate==="function")return formatDisplayDate(value).replace(",","");
+  if(!value)return "Saturday 16 May";
+  return String(value).replace(",","");
+}
+function applyHomeSettings(s){
+  latestSettings=s||{};
+  applyHomeStyles(latestSettings["Styles"]||{});
+
+  const active=boolValue(latestSettings["Activate"],false);
+  const phone=phoneScreen,off=offScreen,notification=notificationButton;
+  if(!active){
+    phone.classList.remove("awake");off.classList.remove("hidden");notification.classList.remove("show");wasActive=false;return;
+  }
+
+  const display=latestSettings["Display Time"]||"10:47";
+  displayTime.textContent=display;
+  statusTime.textContent=display;
+  ownerLabel.textContent="";
+  notificationTime.textContent=latestSettings["Notification Time"]||"now";
+  displayDate.textContent=formatDateFallback(latestSettings["Display Date"]);
+  signal.textContent=latestSettings["Signal"]||"5G";
+
+  const b=parseInt(latestSettings["Battery %"]||"43",10),bat=Math.max(0,Math.min(100,isNaN(b)?43:b));
+  batteryPercent.textContent=bat+"%";
+  batteryFill.style.width=bat+"%";
+
+  notificationApp.textContent=latestSettings["Notification App"]||latestSettings["App Name"]||"Messages";
+  notificationFrom.textContent=latestSettings["Notification From"]||THEM||"Jess";
+  notificationText.textContent=latestSettings["Notification Text"]||"New message";
+
+  const showBubble=boolValue(latestSettings["Display Notification Bubble"],true);
+  if(showBubble)notification.classList.add("show");else notification.classList.remove("show");
+
+  if(!wasActive){
+    setTimeout(()=>{if(showBubble)playPing();off.classList.add("hidden");phone.classList.add("awake")},150);
+  }else{
+    off.classList.add("hidden");phone.classList.add("awake");
+  }
+  wasActive=true;
+}
+function applyHomeStyles(styles){
+  if(!styles)return;
+  setCssVar("--home-time",styles["Home Time Colour"]||"#ffffff");
+  setCssVar("--home-text",styles["Home Text Colour"]||"#ffffff");
+  setCssVar("--notification-bg",styles["Home Notification Colour"]||"rgba(38,49,61,0.92)");
+  setCssVar("--notification-text",styles["Home Notification Text Colour"]||"#f4f7fb");
+  const fontStyle=String(styles["Home Font Style"]||"").toLowerCase();
+  setCssVar("--time-weight",fontStyle==="thin"?"500":fontStyle==="bold"?"760":"650");
+  setCssVar("--wallpaper",getWallpaperCss(styles["Home Wallpaper"],styles["Home Wallpaper URL"]));
+}
+function openChat(){
+  const me=latestSettings["Phone Owner"]||ME||"Leon",them=latestSettings["Notification From"]||THEM||"Jess",target=latestSettings["Target Message ID"]||"";
+  let url="chat.html?me="+encodeURIComponent(me)+"&them="+encodeURIComponent(them);
+  if(target)url+="&messageId="+encodeURIComponent(target);
+  window.location.href=url;
+}
+notificationButton.addEventListener("click",openChat);
+notificationButton.addEventListener("touchend",e=>{e.preventDefault();openChat()});
+document.body.addEventListener("touchstart",armSound,{once:true});
+document.body.addEventListener("click",armSound,{once:true});
+loadHomeScreen();setInterval(loadHomeScreen,1000);
+</script>
+</body>
+</html>
